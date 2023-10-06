@@ -160,6 +160,9 @@ app.post('/endGame/:roomId', (req, res) => {
 
     target.gameStarted = false
     target.gameOver = true
+
+    // How to end previous interval?
+    
     res.json(target)
 })
 
