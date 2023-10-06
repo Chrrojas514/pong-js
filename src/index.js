@@ -1,226 +1,198 @@
-const app = require('express')()
-const bodyParser = require('body-parser')
-const req = require('express/lib/request')
-const res = require('express/lib/response')
-const port = 3000
+const app = require('express')();
+const bodyParser = require('body-parser');
+
+const port = 3000;
 
 const gameStates = [{
-    "roomName": "generating",
-    "playerA": "",
-    "playerB": "", 
-    "playerAPaddlePosX": 5,
-    "playerAPaddlePosY": 5,
-    "playerAPaddleSize": 5,
-    "playerBPaddlePosX": 115,
-    "playerBPaddlePosY": 5,
-    "playerBPaddleSize": 5,
-    "playerAScore": 0,
-    "playerBScore": 0,
-    "ballPositionX": 20,
-    "ballPositionY": 20,
-    "ballVelocityX": 2,
-    "ballVelocityY": 2,
-    "gameStarted": false,
-    "gameOver": false,
-    "roomId" : "5670b0ab39b64"
-}] 
+  roomName: 'generating',
+  playerA: '',
+  playerB: '',
+  playerAPaddlePosX: 5,
+  playerAPaddlePosY: 5,
+  playerAPaddleSize: 5,
+  playerBPaddlePosX: 115,
+  playerBPaddlePosY: 5,
+  playerBPaddleSize: 5,
+  playerAScore: 0,
+  playerBScore: 0,
+  ballPositionX: 20,
+  ballPositionY: 20,
+  ballVelocityX: 2,
+  ballVelocityY: 2,
+  gameStarted: false,
+  gameOver: false,
+  roomId: '5670b0ab39b64',
+}];
 
-app.use(bodyParser.json()) // for parsing application/json
+app.use(bodyParser.json()); // for parsing application/json
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+  res.send('Hello World!');
+});
 
-app.post('/createRoom', (req, res ) => {
-    res.json(req.body)
-    const newGameState = {... req.body, roomId: Math.random().toString(16).slice(2)}
+app.post('/createRoom', (req, res) => {
+  res.json(req.body);
+  const newGameState = { ...req.body, roomId: Math.random().toString(16).slice(2) };
 
-    gameStates.push(newGameState)
+  gameStates.push(newGameState);
 
-    console.log(gameStates)
-})
+  console.log(gameStates);
+});
 
 app.get('/gameStates/:id', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.params.id
-    })
-    res.json(target)
-})
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
+  res.json(target);
+});
 
 app.get('/gameStates', (req, res) => {
-    res.json(gameStates)
-})
+  res.json(gameStates);
+});
 
 app.put('/paddlePositionUpdate', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.params.id
-    })
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
 
-    if (!target) {
-        res.status(404).send("Room not found")
-        return
-    }
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
 
-    if (req.body.playerName === target.playerA) {
-        target.playerAPaddlePos = req.body.paddlePosition
+  if (req.body.playerName === target.playerA) {
+    target.playerAPaddlePos = req.body.paddlePosition;
 
-        res.json(target)
-        return
-    }
+    res.json(target);
+    return;
+  }
 
-    if (req.body.playerName === target.playerB) {
-        target.playerBPaddlePos = req.body.paddlePosition
+  if (req.body.playerName === target.playerB) {
+    target.playerBPaddlePos = req.body.paddlePosition;
 
-        res.json(target)
-        return
-    }
+    res.json(target);
+    return;
+  }
 
-    res.send('Player with given name not found')
-    //Do I need this return?
-    return
-})
+  res.send('Player with given name not found');
+  // Do I need this return?
+});
 
 app.post('/joinRoom', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.body.id
-    })
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.id);
 
-    if (!target) {
-        res.status(404).send("Room not found")
-        return
-    }
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
 
-    //Checks for null, not a number, empty string, etc
-    if (!target.playerA) {
-        target.playerA = req.body.playerName
+  // Checks for null, not a number, empty string, etc
+  if (!target.playerA) {
+    target.playerA = req.body.playerName;
 
-        res.json(target)
-        return
-    }
+    res.json(target);
+    return;
+  }
 
-    target.playerB = req.params.playerName
-    res.json(target)
-})
+  target.playerB = req.params.playerName;
+  res.json(target);
+});
 
 app.post('leaveRoom', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.body.id
-    })
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.id);
 
-    if (!target) {
-        res.status(404).send("Room not found")
-        return
-    }
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
 
-    if (req.body.playerName === target.playerA) {
-        target.playerA = ""
+  if (req.body.playerName === target.playerA) {
+    target.playerA = '';
 
-        res.json(target)
-        return
-    }
+    res.json(target);
+    return;
+  }
 
-    if (req.body.playerName === target.playerB) {
-        target.playerB = ""
+  if (req.body.playerName === target.playerB) {
+    target.playerB = '';
 
-        res.json(target)
-        return
-    }
+    res.json(target);
+    return;
+  }
 
-    res.send('Room is already empty!')
-    return
-})
+  res.send('Room is already empty!');
+});
 
 app.post('/startGame/:id', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.params.id
-    })
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
 
-    if (!target) {
-        res.status(404).send("Room not found")
-        return
-    }
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
 
-    target.gameStarted = true
-    target.gameOver = false
+  target.gameStarted = true;
+  target.gameOver = false;
 
-    setInterval(() => updateTick(target), 1000)
+  setInterval(() => updateTick(target), 1000);
 
-    res.json(target)
-})
+  res.json(target);
+});
 
 app.post('/endGame/:roomId', (req, res) => {
-    const target = gameStates.find(gamestate => {
-        return gamestate.roomId === req.params.id
-    })
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
 
-    if (!target) {
-        res.status(404).send("Room not found")
-        return
-    }
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
 
-    target.gameStarted = false
-    target.gameOver = true
+  target.gameStarted = false;
+  target.gameOver = true;
 
-    // How to end previous interval?
-    
-    res.json(target)
-})
+  // How to end previous interval?
 
-const updateTick = ( gamestate ) => {
-    // If ball hits roof or floor of arena
-    if (gamestate.ballPositionY <= 0 || gamestate.ballPositionY >= 100) {
-        gamestate.ballVelocityY = gamestate.ballVelocityY * -1
-    }
-    
-    if (playerAWon) {
-        gamestate.playerAScore++
-    }
+  res.json(target);
+});
 
-    if (playerBWon) {
-        gamestate.playerBScore++
-    }
+const updateTick = (gamestate) => {
+  const newGamestate = { ...gamestate };
+  // If ball hits roof or floor of arena
+  if (newGamestate.ballPositionY <= 0 || newGamestate.ballPositionY >= 100) {
+    newGamestate.ballVelocityY *= -1;
+  }
 
-    if (ballHitPaddleA) {
-        gamestate.ballVelocityX = gamestate.ballVelocityX * -1
-        gamestate.ballPositionX = gamestate.ballPositionX + gamestate.ballVelocityX
-        gamestate.ballPositionY = gamestate.ballPositionY + gamestate.ballVelocityY
-    }
+  if (playerAWon(newGamestate)) {
+    newGamestate.playerAScore += 1;
+  }
 
-    if (ballHitPaddleB) {
-        gamestate.ballVelocityY = gamestate.ballVelocityY * -1
-        gamestate.ballPositionX = gamestate.ballPositionX + gamestate.ballVelocityX
-        gamestate.ballPositionY = gamestate.ballPositionY + gamestate.ballVelocityY
-    }
-}
+  if (playerBWon(newGamestate)) {
+    newGamestate.playerBScore += 1;
+  }
 
-const playerAWon = (gamestate) => {
-    // Ball went out of bounds on the left
-    if (gamestate.ballPositionX <= 0) { return false }
-    return true
-}
+  if (ballHitPaddleA(newGamestate)) {
+    newGamestate.ballVelocityX *= -1;
+    newGamestate.ballPositionX += newGamestate.ballVelocityX;
+    newGamestate.ballPositionY += newGamestate.ballVelocityY;
+  }
 
-const playerBWon = (gamestate) => {
-    //Ball went out of bounds on the right
-    if (gamestate.ballPositionX >= 180) { return false }
-    return true
-}
+  if (ballHitPaddleB(newGamestate)) {
+    newGamestate.ballVelocityY *= -1;
+    newGamestate.ballPositionX += newGamestate.ballVelocityX;
+    newGamestate.ballPositionY += newGamestate.ballVelocityY;
+  }
+};
 
-const ballHitPaddleA = (gamestate) => {
-    if ( gamestate.ballPositionX === gamestate.playerAPaddlePosX &&
-        (gamestate.ballPositionY >= gamestate.playerAPaddlePosY &&
-            gamestate.ballPositionY <= gamestate.playerAPaddlePosY + gamestate.playerAPaddleSize) ) 
-            { return true }
-    return false
-}
+// Ball went out of bounds on the left
+const playerAWon = (gamestate) => gamestate.ballPositionX <= 0;
 
-const ballHitPaddleB = (gamestate) => {
-    if ( gamestate.ballPositionX === gamestate.playerBPaddlePosX &&
-        (gamestate.ballPositionY >= gamestate.playerBPaddlePosY &&
-            gamestate.ballPositionY <= gamestate.playerBPaddlePosY + gamestate.playerBPaddleSize) ) 
-            { return true }
-    return false
-}
+// Ball went out of bounds on the right
+const playerBWon = (gamestate) => gamestate.ballPositionX >= 180;
+
+const ballHitPaddleA = (gamestate) => gamestate.ballPositionX === gamestate.playerAPaddlePosX
+      && (gamestate.ballPositionY >= gamestate.playerAPaddlePosY
+        && gamestate.ballPositionY <= gamestate.playerAPaddlePosY + gamestate.playerAPaddleSize);
+
+const ballHitPaddleB = (gamestate) => gamestate.ballPositionX === gamestate.playerBPaddlePosX
+        && (gamestate.ballPositionY >= gamestate.playerBPaddlePosY
+          && gamestate.ballPositionY <= gamestate.playerBPaddlePosY + gamestate.playerBPaddleSize);
 
 app.listen(port, () => {
-  console.log(`Pong app listening on port ${port}`)
-})
+  console.log(`Pong app listening on port ${port}`);
+});
