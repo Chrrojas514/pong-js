@@ -1,4 +1,6 @@
 const app = require('express')();
+const cors = require('cors');
+
 const bodyParser = require('body-parser');
 
 const port = 5000;
@@ -24,6 +26,7 @@ const gameStates = [{
   roomId: '5670b0ab39b64',
 }];
 
+app.use(cors());
 app.use(bodyParser.json()); // for parsing application/json
 
 app.get('/', (req, res) => {
