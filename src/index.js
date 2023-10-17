@@ -1,7 +1,7 @@
 const app = require('express')();
 const bodyParser = require('body-parser');
 
-const port = 3000;
+const port = 5000;
 
 const gameStates = [{
   roomName: 'generating',
