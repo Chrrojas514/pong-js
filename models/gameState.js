@@ -3,8 +3,9 @@ const sequelize = require('../db/database');
 
 const GameState = sequelize.define('gameState', {
   roomId: {
-    type: Sequelize.TEXT,
+    type: Sequelize.UUID,
     primaryKey: true,
+    defaultValue: Sequelize.UUIDV4,
   },
   roomName: {
     type: Sequelize.TEXT,
