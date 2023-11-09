@@ -9,12 +9,8 @@ const gameStates = [{
   roomName: 'generating',
   playerA: '',
   playerB: '',
-  playerAPaddlePosX: 5,
-  playerAPaddlePosY: 5,
-  playerAPaddleSize: 5,
-  playerBPaddlePosX: 115,
-  playerBPaddlePosY: 5,
-  playerBPaddleSize: 5,
+  playerAPaddlePosition: 0,
+  playerBPaddlePosition: 0,
   playerAScore: 0,
   playerBScore: 0,
   ballPositionX: 20,
@@ -42,8 +38,8 @@ app.post('/createRoom', (req, res) => {
   console.log(gameStates);
 });
 
-app.get('/gameStates/:id', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
+app.get('/gameStates/:roomId', (req, res) => {
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.roomId);
   res.json(target);
 });
 
@@ -51,8 +47,43 @@ app.get('/gameStates', (req, res) => {
   res.json(gameStates);
 });
 
-app.put('/paddlePositionUpdate', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
+app.get('/gameStates/:roomId/:playerName', (req, res) => {
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.roomId);
+
+  if (!target) {
+    res.status(404).send('Room not found');
+    return;
+  }
+
+  if (target.playerA === req.body.playerName) {
+    target.playerAPaddlePos = req.body.paddlePosition;
+
+    const response = {
+      roomId: target.roomId,
+      playerName: target.playerA,
+    };
+
+    res.json(response);
+    return;
+  }
+
+  if (target.playerB === req.body.playerName) {
+    target.playerBPaddlePos = req.body.paddlePosition;
+
+    const response = {
+      roomId: target.roomId,
+      playerName: target.playerB,
+    };
+
+    res.json(response);
+    return;
+  }
+
+  res.status(404).send('Player not found');
+});
+
+app.put('/gameStates/:roomId', (req, res) => {
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.roomId);
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -60,25 +91,50 @@ app.put('/paddlePositionUpdate', (req, res) => {
   }
 
   if (req.body.playerName === target.playerA) {
-    target.playerAPaddlePos = req.body.paddlePosition;
+    target.playerAPaddlePosition = req.body.paddlePosition;
 
     res.json(target);
     return;
   }
 
   if (req.body.playerName === target.playerB) {
-    target.playerBPaddlePos = req.body.paddlePosition;
+    target.playerBPaddlePosition = req.body.paddlePosition;
 
     res.json(target);
     return;
   }
 
   res.send('Player with given name not found');
-  // Do I need this return?
 });
 
+// app.put('/gameStates/:roomId/:playerName', (req, res) => {
+//   const target = gameStates.find((gamestate) => gamestate.roomId === req.params.roomId);
+
+//   if (!target) {
+//     res.status(404).send('Room not found');
+//     return;
+//   }
+
+//   if (target.playerA === req.params.playerName) {
+//     target.playerAPaddlePos = req.body.paddlePosition;
+
+//     res.json(target);
+//     return;
+//   }
+
+//   if (target.playerB === req.params.playerName) {
+//     target.playerBPaddlePos = req.body.playerBPaddlePos;
+
+//     res.json(target);
+//     return;
+//   }
+
+//   res.status(404).send('Player not found');
+// });
+
 app.post('/joinRoom', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.id);
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.roomId);
+  console.log(gameStates);
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -93,12 +149,18 @@ app.post('/joinRoom', (req, res) => {
     return;
   }
 
-  target.playerB = req.params.playerName;
-  res.json(target);
+  if (!target.playerB) {
+    target.playerB = req.body.playerName;
+
+    res.json(target);
+    return;
+  }
+
+  res.status(400).send('Room is full!');
 });
 
-app.post('leaveRoom', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.id);
+app.post('/leaveRoom', (req, res) => {
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.roomId);
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -122,8 +184,8 @@ app.post('leaveRoom', (req, res) => {
   res.send('Room is already empty!');
 });
 
-app.post('/startGame/:id', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
+app.post('/startGame', (req, res) => {
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.body.roomId);
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -139,7 +201,7 @@ app.post('/startGame/:id', (req, res) => {
 });
 
 app.post('/endGame/:roomId', (req, res) => {
-  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.id);
+  const target = gameStates.find((gamestate) => gamestate.roomId === req.params.roomId);
 
   if (!target) {
     res.status(404).send('Room not found');
