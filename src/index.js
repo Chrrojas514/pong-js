@@ -13,15 +13,25 @@ app.get('/', (req, res) => {
 });
 
 app.post('/createRoom', async (req, res) => {
-  res.json(req.body);
   const newGameState = { ...req.body };
-
-  console.log(newGameState);
   await GameState.create(newGameState);
+
+  res.json(req.body);
+});
+
+app.delete('/gameStates/:roomId', async (req, res) => {
+  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
+
+  if (target) {
+    await target.destroy();
+    return;
+  }
+
+  res.send('Room for deletion not found');
 });
 
 app.get('/gameStates/:roomId', async (req, res) => {
-  const target = await GameState.findByPk(req.params.roomId);
+  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
   res.json(target);
 });
 
@@ -31,43 +41,8 @@ app.get('/gameStates', async (req, res) => {
   res.json(fetchGameStates);
 });
 
-// app.get('/gameStates/:roomId/:playerName', (req, res) => {
-//   const target = gameStates.find((gamestate) => gamestate.roomId === req.body.roomId);
-
-//   if (!target) {
-//     res.status(404).send('Room not found');
-//     return;
-//   }
-
-//   if (target.playerA === req.body.playerName) {
-//     target.playerAPaddlePos = req.body.paddlePosition;
-
-//     const response = {
-//       roomId: target.roomId,
-//       playerName: target.playerA,
-//     };
-
-//     res.json(response);
-//     return;
-//   }
-
-//   if (target.playerB === req.body.playerName) {
-//     target.playerBPaddlePos = req.body.paddlePosition;
-
-//     const response = {
-//       roomId: target.roomId,
-//       playerName: target.playerB,
-//     };
-
-//     res.json(response);
-//     return;
-//   }
-
-//   res.status(404).send('Player not found');
-// });
-
 app.put('/gameStates/:roomId', async (req, res) => {
-  const target = await GameState.findByPk(req.params.roomId);
+  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -93,33 +68,8 @@ app.put('/gameStates/:roomId', async (req, res) => {
   res.send('Player with given name not found');
 });
 
-// app.put('/gameStates/:roomId/:playerName', (req, res) => {
-//   const target = gameStates.find((gamestate) => gamestate.roomId === req.params.roomId);
-
-//   if (!target) {
-//     res.status(404).send('Room not found');
-//     return;
-//   }
-
-//   if (target.playerA === req.params.playerName) {
-//     target.playerAPaddlePos = req.body.paddlePosition;
-
-//     res.json(target);
-//     return;
-//   }
-
-//   if (target.playerB === req.params.playerName) {
-//     target.playerBPaddlePos = req.body.playerBPaddlePos;
-
-//     res.json(target);
-//     return;
-//   }
-
-//   res.status(404).send('Player not found');
-// });
-
 app.post('/joinRoom', async (req, res) => {
-  const target = await GameState.findByPk(req.body.roomId);
+  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -147,7 +97,7 @@ app.post('/joinRoom', async (req, res) => {
 });
 
 app.post('/leaveRoom', async (req, res) => {
-  const target = GameState.findByPk(req.body.roomId);
+  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -170,11 +120,11 @@ app.post('/leaveRoom', async (req, res) => {
     return;
   }
 
-  res.send('Room is already empty!');
+  res.send('Room is already empty');
 });
 
 app.post('/startGame', async (req, res) => {
-  const target = GameState.findByPk(req.body.roomId);
+  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -183,15 +133,19 @@ app.post('/startGame', async (req, res) => {
 
   target.gameStarted = true;
   target.gameOver = false;
-  const updatedTarget = target.save();
 
-  setInterval(() => updateTick(target), 1000);
+  target.ballVelocityX = 1;
+  target.ballVelocityY = 1;
+
+  const updatedTarget = await target.save();
+
+  setInterval(() => updateTick(req.body.roomId), 200);
 
   res.json(updatedTarget);
 });
 
-app.post('/endGame/:roomId', (req, res) => {
-  const target = GameState.findByPk(req.params.roomId);
+app.post('/endGame', async (req, res) => {
+  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -200,39 +154,46 @@ app.post('/endGame/:roomId', (req, res) => {
 
   target.gameStarted = false;
   target.gameOver = true;
-  const updatedTarget = target.save();
+
+  clearInterval(updateTick);
+  const updatedTarget = await target.save();
 
   // How to end previous interval?
 
   res.json(updatedTarget);
 });
 
-const updateTick = (gamestate) => {
-  const newGamestate = { ...gamestate };
+const updateTick = async (roomId) => {
+  const target = await GameState.findOne({ where: { roomId }, raw: false });
   // If ball hits roof or floor of arena
-  if (newGamestate.ballPositionY <= 0 || newGamestate.ballPositionY >= 100) {
-    newGamestate.ballVelocityY *= -1;
+  if (target.ballPositionY <= 191 || target.ballPositionY >= 391) {
+    target.ballVelocityY *= -1;
   }
 
-  if (playerAWon(newGamestate)) {
-    newGamestate.playerAScore += 1;
+  if (playerAWon(target)) {
+    target.playerAScore += 1;
   }
 
-  if (playerBWon(newGamestate)) {
-    newGamestate.playerBScore += 1;
+  if (playerBWon(target)) {
+    target.playerBScore += 1;
   }
 
-  if (ballHitPaddleA(newGamestate)) {
-    newGamestate.ballVelocityX *= -1;
-    newGamestate.ballPositionX += newGamestate.ballVelocityX;
-    newGamestate.ballPositionY += newGamestate.ballVelocityY;
+  if (ballHitPaddleA(target)) {
+    target.ballVelocityX *= -1;
+    target.ballPositionX += target.ballVelocityX;
+    target.ballPositionY += target.ballVelocityY;
   }
 
-  if (ballHitPaddleB(newGamestate)) {
-    newGamestate.ballVelocityY *= -1;
-    newGamestate.ballPositionX += newGamestate.ballVelocityX;
-    newGamestate.ballPositionY += newGamestate.ballVelocityY;
+  if (ballHitPaddleB(target)) {
+    target.ballVelocityY *= -1;
+    target.ballPositionX += target.ballVelocityX;
+    target.ballPositionY += target.ballVelocityY;
   }
+
+  target.ballPositionX += target.ballVelocityX;
+  target.ballPositionY += target.ballPositionY;
+
+  await target.save();
 };
 
 // Ball went out of bounds on the left
