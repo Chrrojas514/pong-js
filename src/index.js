@@ -152,10 +152,11 @@ app.post('/endGame', async (req, res) => {
     return;
   }
 
+  clearInterval(updateTick);
+
   target.gameStarted = false;
   target.gameOver = true;
 
-  clearInterval(updateTick);
   const updatedTarget = await target.save();
 
   // How to end previous interval?
@@ -165,6 +166,12 @@ app.post('/endGame', async (req, res) => {
 
 const updateTick = async (roomId) => {
   const target = await GameState.findOne({ where: { roomId }, raw: false });
+
+  if (!target.gameStarted) {
+    clearInterval(updateTick);
+    return;
+  }
+
   // If ball hits roof or floor of arena
   if (target.ballPositionY <= 191 || target.ballPositionY >= 391) {
     target.ballVelocityY *= -1;
