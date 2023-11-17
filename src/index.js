@@ -134,8 +134,8 @@ app.post('/startGame', async (req, res) => {
   target.gameStarted = true;
   target.gameOver = false;
 
-  target.ballVelocityX = 1;
-  target.ballVelocityY = 1;
+  target.ballVelocityX = 10;
+  target.ballVelocityY = 10;
 
   const updatedTarget = await target.save();
 
@@ -198,7 +198,7 @@ const updateTick = async (roomId) => {
   }
 
   target.ballPositionX += target.ballVelocityX;
-  target.ballPositionY += target.ballPositionY;
+  target.ballPositionY += target.ballVelocityY;
 
   await target.save();
 };
