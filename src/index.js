@@ -173,7 +173,7 @@ const updateTick = async (roomId) => {
   }
 
   // If ball hits roof or floor of arena
-  if (target.ballPositionY <= 191 || target.ballPositionY >= 391) {
+  if (target.ballPositionY <= 0 || target.ballPositionY >= 100) {
     target.ballVelocityY *= -1;
   }
 
@@ -185,17 +185,17 @@ const updateTick = async (roomId) => {
     target.playerBScore += 1;
   }
 
-  if (ballHitPaddleA(target)) {
-    target.ballVelocityX *= -1;
-    target.ballPositionX += target.ballVelocityX;
-    target.ballPositionY += target.ballVelocityY;
-  }
+  // if (ballHitPaddleA(target)) {
+  //   target.ballVelocityX *= -1;
+  //   target.ballPositionX += target.ballVelocityX;
+  //   target.ballPositionY += target.ballVelocityY;
+  // }
 
-  if (ballHitPaddleB(target)) {
-    target.ballVelocityY *= -1;
-    target.ballPositionX += target.ballVelocityX;
-    target.ballPositionY += target.ballVelocityY;
-  }
+  // if (ballHitPaddleB(target)) {
+  //   target.ballVelocityY *= -1;
+  //   target.ballPositionX += target.ballVelocityX;
+  //   target.ballPositionY += target.ballVelocityY;
+  // }
 
   target.ballPositionX += target.ballVelocityX;
   target.ballPositionY += target.ballVelocityY;
@@ -208,14 +208,6 @@ const playerAWon = (gamestate) => gamestate.ballPositionX <= 0;
 
 // Ball went out of bounds on the right
 const playerBWon = (gamestate) => gamestate.ballPositionX >= 180;
-
-const ballHitPaddleA = (gamestate) => gamestate.ballPositionX === gamestate.playerAPaddlePosX
-      && (gamestate.ballPositionY >= gamestate.playerAPaddlePosY
-        && gamestate.ballPositionY <= gamestate.playerAPaddlePosY + gamestate.playerAPaddleSize);
-
-const ballHitPaddleB = (gamestate) => gamestate.ballPositionX === gamestate.playerBPaddlePosX
-        && (gamestate.ballPositionY >= gamestate.playerBPaddlePosY
-          && gamestate.ballPositionY <= gamestate.playerBPaddlePosY + gamestate.playerBPaddleSize);
 
 app.listen(port, () => {
   console.log(`Pong app listening on port ${port}`);
