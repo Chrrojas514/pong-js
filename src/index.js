@@ -182,6 +182,7 @@ const updateTick = async (roomId) => {
 
   if (target.ballPositionX <= 0 || target.ballPositionX >= 100) {
     target.ballVelocityX *= -1;
+    target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
   }
 
   if (playerAWon(target)) {
