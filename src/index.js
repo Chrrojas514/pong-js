@@ -134,8 +134,8 @@ app.post('/startGame', async (req, res) => {
   target.gameStarted = true;
   target.gameOver = false;
 
-  target.ballVelocityX = 10;
-  target.ballVelocityY = 10;
+  target.ballVelocityX = Math.floor(Math.random() * 2) ? 2 : -2;
+  target.ballVelocityY = 0;
 
   const updatedTarget = await target.save();
 
@@ -156,6 +156,9 @@ app.post('/endGame', async (req, res) => {
 
   target.gameStarted = false;
   target.gameOver = true;
+
+  target.ballPositionX = 50;
+  target.ballPositionY = 50;
 
   const updatedTarget = await target.save();
 
