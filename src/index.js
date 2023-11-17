@@ -180,6 +180,10 @@ const updateTick = async (roomId) => {
     target.ballVelocityY *= -1;
   }
 
+  if (target.ballPositionX <= 0 || target.ballPositionX >= 100) {
+    target.ballVelocityX *= -1;
+  }
+
   if (playerAWon(target)) {
     target.playerAScore += 1;
   }
