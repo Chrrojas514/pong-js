@@ -20,10 +20,15 @@ app.post('/createRoom', async (req, res) => {
 });
 
 app.delete('/gameStates/:roomId', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.params.roomId },
+    raw: false,
+  });
 
   if (target) {
+    clearInterval(updateTick);
     await target.destroy();
+    res.send('successfully deleted');
     return;
   }
 
@@ -31,7 +36,10 @@ app.delete('/gameStates/:roomId', async (req, res) => {
 });
 
 app.get('/gameStates/:roomId', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.params.roomId },
+    raw: false,
+  });
   res.json(target);
 });
 
@@ -42,7 +50,10 @@ app.get('/gameStates', async (req, res) => {
 });
 
 app.put('/gameStates/:roomId', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.params.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.params.roomId },
+    raw: false,
+  });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -69,7 +80,10 @@ app.put('/gameStates/:roomId', async (req, res) => {
 });
 
 app.post('/joinRoom', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.body.roomId },
+    raw: false,
+  });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -97,7 +111,10 @@ app.post('/joinRoom', async (req, res) => {
 });
 
 app.post('/leaveRoom', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.body.roomId },
+    raw: false,
+  });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -124,7 +141,10 @@ app.post('/leaveRoom', async (req, res) => {
 });
 
 app.post('/startGame', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.body.roomId },
+    raw: false,
+  });
 
   if (!target) {
     res.status(404).send('Room not found');
@@ -145,14 +165,17 @@ app.post('/startGame', async (req, res) => {
 });
 
 app.post('/endGame', async (req, res) => {
-  const target = await GameState.findOne({ where: { roomId: req.body.roomId }, raw: false });
+  const target = await GameState.findOne({
+    where: { roomId: req.body.roomId },
+    raw: false,
+  });
 
   if (!target) {
     res.status(404).send('Room not found');
     return;
   }
 
-  clearInterval(updateTick);
+  clearInterval(updateTick(req.body.roomId));
 
   target.gameStarted = false;
   target.gameOver = true;
@@ -170,6 +193,69 @@ app.post('/endGame', async (req, res) => {
 const updateTick = async (roomId) => {
   const target = await GameState.findOne({ where: { roomId }, raw: false });
 
+  if (!target) {
+    console.log('ERROR : GameState with ID not found!');
+    return;
+  }
+
+  // Sending the percent of where the pixel is, so 50 50 is center,
+  // 0 50 is left center and 100 100 is bottom right
+  const paddleABound = {
+    top: target.playerAPaddlePosition,
+    bottom: target.playerAPaddlePosition + 24,
+  };
+  const paddleBBound = {
+    top: target.playerBPaddlePosition,
+    bottom: target.playerBPaddlePosition + 24,
+  };
+
+  const ballHitPaddle = (gamestate) => {
+    const isWithinPaddleX = () => {
+      if (gamestate.ballPositionX <= 10 || gamestate.ballPositionX >= 90) {
+        return true;
+      }
+
+      return false;
+    };
+
+    const isWithinPaddleY = () => {
+      if ((gamestate.ballPositionY >= paddleABound.top
+        && gamestate.ballPositionY <= paddleABound.bottom)
+      || (gamestate.ballPositionY >= paddleBBound.top
+        && gamestate.ballPositionY <= paddleBBound.bottom)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    // if (
+    //   ((gamestate.ballPositionX <= 10 || gamestate.ballPositionX >= 90)
+    //     && ((gamestate.ballPositionY >= paddleABound.top
+    //       && gamestate.ballPositionY <= paddleABound.bottom)))
+    //     || ((gamestate.ballPositionY >= paddleBBound.top
+    //       && gamestate.ballPositionY <= paddleBBound.bottom))
+    // ) {
+    //   return true;
+    // }
+    // return false;
+
+    if (isWithinPaddleX() && isWithinPaddleY()) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const logBallPos = {
+    ballPositionX: target.ballPositionX,
+    ballPositionY: target.ballPositionY,
+  };
+
+  console.log(paddleABound);
+  console.log(logBallPos);
+  console.log(ballHitPaddle(target));
+
   if (!target.gameStarted) {
     clearInterval(updateTick);
     return;
@@ -185,6 +271,11 @@ const updateTick = async (roomId) => {
     target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
   }
 
+  if (ballHitPaddle(target)) {
+    target.ballVelocityX *= -1;
+    target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
+  }
+
   if (playerAWon(target)) {
     target.playerAScore += 1;
   }
@@ -192,18 +283,6 @@ const updateTick = async (roomId) => {
   if (playerBWon(target)) {
     target.playerBScore += 1;
   }
-
-  // if (ballHitPaddleA(target)) {
-  //   target.ballVelocityX *= -1;
-  //   target.ballPositionX += target.ballVelocityX;
-  //   target.ballPositionY += target.ballVelocityY;
-  // }
-
-  // if (ballHitPaddleB(target)) {
-  //   target.ballVelocityY *= -1;
-  //   target.ballPositionX += target.ballVelocityX;
-  //   target.ballPositionY += target.ballVelocityY;
-  // }
 
   target.ballPositionX += target.ballVelocityX;
   target.ballPositionY += target.ballVelocityY;
@@ -215,7 +294,7 @@ const updateTick = async (roomId) => {
 const playerAWon = (gamestate) => gamestate.ballPositionX <= 0;
 
 // Ball went out of bounds on the right
-const playerBWon = (gamestate) => gamestate.ballPositionX >= 180;
+const playerBWon = (gamestate) => gamestate.ballPositionX >= 100;
 
 app.listen(port, () => {
   console.log(`Pong app listening on port ${port}`);
