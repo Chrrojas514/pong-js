@@ -8,6 +8,9 @@ const port = 5000;
 app.use(cors());
 app.use(bodyParser.json()); // for parsing application/json
 
+// has roomId, and interval info
+const intervalKeys = { };
+
 app.get('/', (req, res) => {
   res.send('Pong game!');
 });
@@ -26,7 +29,7 @@ app.delete('/gameStates/:roomId', async (req, res) => {
   });
 
   if (target) {
-    clearInterval(updateTick);
+    clearInterval(intervalKeys[target.roomId]);
     await target.destroy();
     res.send('successfully deleted');
     return;
@@ -157,10 +160,14 @@ app.post('/startGame', async (req, res) => {
   target.ballVelocityX = Math.floor(Math.random() * 2) ? 2 : -2;
   target.ballVelocityY = 0;
 
+  const intervalInfo = setInterval(() => updateTick(req.body.roomId), 200);
+  // const intervalId = setInterval(() => updateTick(req.body.roomId), 200);
+  // console.log(intervalId);
+  // target.intervalId = intervalId;
+
+  intervalKeys[target.roomId] = intervalInfo;
+
   const updatedTarget = await target.save();
-
-  setInterval(() => updateTick(req.body.roomId), 200);
-
   res.json(updatedTarget);
 });
 
@@ -175,7 +182,7 @@ app.post('/endGame', async (req, res) => {
     return;
   }
 
-  clearInterval(updateTick(req.body.roomId));
+  clearInterval(intervalKeys[target.roomId]);
 
   target.gameStarted = false;
   target.gameOver = true;
@@ -202,16 +209,16 @@ const updateTick = async (roomId) => {
   // 0 50 is left center and 100 100 is bottom right
   const paddleABound = {
     top: target.playerAPaddlePosition,
-    bottom: target.playerAPaddlePosition + 24,
+    bottom: target.playerAPaddlePosition + 50,
   };
   const paddleBBound = {
     top: target.playerBPaddlePosition,
-    bottom: target.playerBPaddlePosition + 24,
+    bottom: target.playerBPaddlePosition + 50,
   };
 
   const ballHitPaddle = (gamestate) => {
     const isWithinPaddleX = () => {
-      if (gamestate.ballPositionX <= 10 || gamestate.ballPositionX >= 90) {
+      if (gamestate.ballPositionX === 10 || gamestate.ballPositionX === 90) {
         return true;
       }
 
@@ -229,17 +236,6 @@ const updateTick = async (roomId) => {
       return false;
     };
 
-    // if (
-    //   ((gamestate.ballPositionX <= 10 || gamestate.ballPositionX >= 90)
-    //     && ((gamestate.ballPositionY >= paddleABound.top
-    //       && gamestate.ballPositionY <= paddleABound.bottom)))
-    //     || ((gamestate.ballPositionY >= paddleBBound.top
-    //       && gamestate.ballPositionY <= paddleBBound.bottom))
-    // ) {
-    //   return true;
-    // }
-    // return false;
-
     if (isWithinPaddleX() && isWithinPaddleY()) {
       return true;
     }
@@ -252,12 +248,19 @@ const updateTick = async (roomId) => {
     ballPositionY: target.ballPositionY,
   };
 
+  const logBallVel = {
+    ballVelocityX: target.ballVelocityX,
+    ballVelocityY: target.ballVelocityY,
+  };
+
   console.log(paddleABound);
   console.log(logBallPos);
+  console.log(logBallVel);
   console.log(ballHitPaddle(target));
 
+
   if (!target.gameStarted) {
-    clearInterval(updateTick);
+    clearInterval(intervalKeys[target.roomId]);
     return;
   }
 
@@ -291,10 +294,10 @@ const updateTick = async (roomId) => {
 };
 
 // Ball went out of bounds on the left
-const playerAWon = (gamestate) => gamestate.ballPositionX <= 0;
+const playerAWon = (gamestate) => gamestate.ballPositionX >= 100;
 
 // Ball went out of bounds on the right
-const playerBWon = (gamestate) => gamestate.ballPositionX >= 100;
+const playerBWon = (gamestate) => gamestate.ballPositionX <= 0;
 
 app.listen(port, () => {
   console.log(`Pong app listening on port ${port}`);

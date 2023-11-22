@@ -22,6 +22,12 @@ const GameState = sequelize.define('gameState', {
   playerBPaddlePosition: {
     type: Sequelize.INTEGER,
   },
+  playerAScore: {
+    type: Sequelize.INTEGER,
+  },
+  playerBScore: {
+    type: Sequelize.INTEGER,
+  },
   ballPositionX: {
     type: Sequelize.INTEGER,
   },
