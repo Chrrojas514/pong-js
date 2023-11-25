@@ -209,11 +209,11 @@ const updateTick = async (roomId) => {
   // 0 50 is left center and 100 100 is bottom right
   const paddleABound = {
     top: target.playerAPaddlePosition,
-    bottom: target.playerAPaddlePosition + 50,
+    bottom: target.playerAPaddlePosition + 24,
   };
   const paddleBBound = {
     top: target.playerBPaddlePosition,
-    bottom: target.playerBPaddlePosition + 50,
+    bottom: target.playerBPaddlePosition + 24,
   };
 
   const ballHitPaddle = (gamestate) => {
