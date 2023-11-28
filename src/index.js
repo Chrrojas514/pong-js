@@ -269,11 +269,6 @@ const updateTick = async (roomId) => {
     target.ballVelocityY *= -1;
   }
 
-  if (target.ballPositionX <= 0 || target.ballPositionX >= 100) {
-    target.ballVelocityX *= -1;
-    target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
-  }
-
   if (ballHitPaddle(target)) {
     target.ballVelocityX *= -1;
     target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
@@ -281,10 +276,22 @@ const updateTick = async (roomId) => {
 
   if (playerAWon(target)) {
     target.playerAScore += 1;
+
+    target.ballPositionX = 50;
+    target.ballPositionY = 50;
+
+    target.ballVelocityX = Math.floor(Math.random() * 2) ? 2 : -2;
+    target.ballVelocityY = 0;
   }
 
   if (playerBWon(target)) {
     target.playerBScore += 1;
+
+    target.ballPositionX = 50;
+    target.ballPositionY = 50;
+
+    target.ballVelocityX = Math.floor(Math.random() * 2) ? 2 : -2;
+    target.ballVelocityY = 0;
   }
 
   target.ballPositionX += target.ballVelocityX;
