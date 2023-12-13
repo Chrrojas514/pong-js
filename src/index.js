@@ -270,8 +270,14 @@ const updateTick = async (roomId) => {
   }
 
   if (ballHitPaddle(target)) {
+    if (target.ballPositionY < paddleABound.bottom || target.ballPositionY < paddleBBound.bottom) {
+      target.ballVelocityX *= -1;
+      target.ballVelocityY = 2;
+      return;
+    }
+
     target.ballVelocityX *= -1;
-    target.ballVelocityY = Math.floor(Math.random() * 2) ? 2 : -2;
+    target.ballVelocityY = -2;
   }
 
   if (playerAWon(target)) {
